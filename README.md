@@ -1,4 +1,6 @@
-﻿Json RESTful controller for AVR
+﻿## Json RESTful controller for AVR
+
+> This library was written for AVR for .NET versions 14 and up. It will work with lower versions, but you'll need to copy the classes into a new project manually (ie, you won't be able to open this project from those older versions).
 
 The ASNA.JsonRestRouting library provides the classes needed to provide a Json RESTful API for ASNA Visual RPG for .NET. The ASNA.JsonRestRouting library was written in ASNA Visual RPG. It's intent is to make it easy to work with Json in your AVR apps. 
 
