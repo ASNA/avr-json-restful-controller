@@ -1,0 +1,90 @@
+﻿Using System
+Using System.Collections.Generic
+Using System.Web
+Using System.Web.Routing
+
+DclNamespace ASNA.JsonRestRouting
+
+BegClass Router Access(*Public)
+
+	DclFld _Routes Type(RouteCollection) Access(*Private)
+
+	BegConstructor Access(*Public)
+		DclSrParm Routes Type(RouteCollection)
+
+		_Routes = Routes
+	EndConstructor
+
+	BegSr Page Access(*Public)
+		DclSrParm Pattern Type(*String)
+		DclSrParm RouteName Type(*String)
+		DclSrParm PagePath Type(*String)
+
+		_Routes.MapPageRoute(RouteName, Pattern, PagePath)
+	EndSr
+
+	BegSr Action Access(*Public)
+		DclSrParm Pattern Type(*String)
+		DclSrParm Method Type(*String)
+		DclSrParm ControllerType Type(Type)
+
+		_Routes.Add(*New Route(Pattern, *New RouteAction(Method, ControllerType)))
+	EndSr
+
+	BegSr Get Access(*Public)
+		DclSrParm Pattern Type(*String)
+		DclSrParm Method Type(*String)
+		DclSrParm ControllerType Type(Type)
+
+		_Routes.Add(*New Route(Pattern, *Nothing, CreateMethodConstraint("GET"), *New RouteAction(Method, ControllerType)))
+	EndSr
+
+	BegSr Post Access(*Public)
+		DclSrParm Pattern Type(*String)
+		DclSrParm Method Type(*String)
+		DclSrParm ControllerType Type(Type)
+
+		_Routes.Add(*New Route(Pattern, *Nothing, CreateMethodConstraint("POST"), *New RouteAction(Method, ControllerType)))
+	EndSr
+
+	BegSr Put Access(*Public)
+		DclSrParm Pattern Type(*String)
+		DclSrParm Method Type(*String)
+		DclSrParm ControllerType Type(Type)
+
+		_Routes.Add(*New Route(Pattern, *Nothing, CreateMethodConstraint("PUT"), *New RouteAction(Method, ControllerType)))
+	EndSr
+
+	BegSr Patch Access(*Public)
+		DclSrParm Pattern Type(*String)
+		DclSrParm Method Type(*String)
+		DclSrParm ControllerType Type(Type)
+
+		_Routes.Add(*New Route(Pattern, *Nothing, CreateMethodConstraint("PATCH"), *New RouteAction(Method, ControllerType)))
+	EndSr
+
+	BegSr Delete Access(*Public)
+		DclSrParm Pattern Type(*String)
+		DclSrParm Method Type(*String)
+		DclSrParm ControllerType Type(Type)
+
+		_Routes.Add(*New Route(Pattern, *Nothing, CreateMethodConstraint("DELETE"), *New RouteAction(Method, ControllerType)))
+	EndSr
+
+	BegFunc CreateMethodConstraint Type(RouteValueDictionary) Access(*Protected)
+		DclSrParm Method Type(*String)
+
+		DclFld Constraints Type(Dictionary(*Of *String, *Object))
+		DclFld MethodConstraint Type(HttpMethodConstraint)
+		DclArray Methods Type(*String) Rank(1)
+
+		Methods = *New *String[1]
+		Methods[0] = Method
+		MethodConstraint = *New HttpMethodConstraint(Methods)
+		Constraints = *New Dictionary(*Of *String, *Object)()
+		Constraints.Add("httpMethod", MethodConstraint)
+
+		LeaveSr *New RouteValueDictionary(Constraints)
+	EndFunc
+
+EndClass

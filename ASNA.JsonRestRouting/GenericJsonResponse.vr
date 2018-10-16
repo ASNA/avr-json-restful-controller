@@ -1,0 +1,25 @@
+﻿Using System
+Using System.Collections.Generic
+
+DclNamespace ASNA.JsonRestRouting
+
+BegClass GenericJsonResponse Access(*Public) 
+
+	DclFld ResponseDictionary Type(Dictionary(*Of *String, *String)) 
+
+	BegConstructor Access(*Public) 
+		ResponseDictionary = *New Dictionary(*Of *String, *String)() 
+	EndConstructor
+
+	BegSr Add Access(*Public) 
+		DclSrParm Key Type(*String) 
+		DclSrParm Value Type(*String) 
+
+		*This.ResponseDictionary.Add(Key,Value) 
+	EndSr
+
+	BegFunc GetResponseDictionary Access(*Public) Type(Dictionary(*Of *String, *String)) 
+		LeaveSr *This.ResponseDictionary 
+	EndFunc 
+
+EndClass 

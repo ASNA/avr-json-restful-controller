@@ -1,0 +1,43 @@
+﻿Using System
+Using System.Web
+Using System.Web.Routing
+
+DclNamespace ASNA.JsonRestRouting
+
+BegClass RouteAction Access(*Public) Implements(System.Web.Routing.IRouteHandler)
+
+	DclFld _ControllerType Type(Type) Access(*Private)
+	DclFld _MethodName Type(*String) Access(*Private)
+
+	BegProp MethodName Type(*String) Access(*Public)
+		BegSet
+			_MethodName = *Propval
+		EndSet
+		BegGet
+			LeaveSr _MethodName
+		EndGet
+	EndProp
+
+	BegConstructor Access(*Public)
+		DclSrParm Method Type(*String)
+		DclSrParm ControllerType Type(Type)
+
+		_ControllerType = ControllerType
+		_MethodName = Method
+	EndConstructor
+
+	BegFunc GetHttpHandler Type(IHttpHandler) Access(*Public) Implements(System.Web.Routing.IRouteHandler.GetHttpHandler)
+		DclSrParm RequestContext Type(System.Web.Routing.RequestContext)
+
+		DclFld HttpHandler Type(IHttpHandler)
+
+		HttpHandler = Activator.CreateInstance(_ControllerType) *As IHttpHandler
+
+		If (HttpHandler *Is Controller)
+			(HttpHandler *As Controller).RouteData = RequestContext.RouteData
+		EndIf
+
+		LeaveSr HttpHandler
+	EndFunc
+
+EndClass

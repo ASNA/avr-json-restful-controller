@@ -1,0 +1,204 @@
+﻿Using System
+Using System.Globalization
+Using System.Collections.Generic
+Using System.Reflection
+Using System.Web
+Using System.Web.Routing
+
+DclNamespace ASNA.JsonRestRouting
+
+BegClass Controller Access(*Public) Implements(IHttpHandler)
+
+	DclFld _MethodName Type(*String) Access(*Private)
+	DclFld _RouteData Type(RouteData) Access(*Private)
+	
+	DclFld Http Type(HttpContext) Access(*Protected)
+
+	BegProp RouteData Type(RouteData) Access(*Public)
+		BegSet
+			_RouteData = *Propval
+		EndSet
+		BegGet
+			LeaveSr _RouteData
+		EndGet
+	EndProp
+
+	BegProp IsReusable Type(*Boolean) Access(*Public) Implements(IHttpHandler.IsReusable)
+		BegGet
+			LeaveSr *False
+		EndGet
+	EndProp
+
+	BegSr ProcessRequest Access(*Public) Implements(IHttpHandler.ProcessRequest)
+		DclSrParm Context Type(HttpContext)
+
+		DclFld ResponseData Type(*Object) Inz(*Nothing)
+		DclFld Json Type(*String)
+
+		Http = Context.Current
+		
+		If (RouteData <> *Nothing)
+			_MethodName = (RouteData.RouteHandler *As RouteAction).MethodName
+			ResponseData = ExecuteMethod(_MethodName, *This)
+		EndIf
+
+		If ResponseData *Is GenericJsonResponse
+			ResponseData = (ResponseData *As GenericJsonResponse).GetResponseDictionary()
+		EndIf 
+
+		Json = NewtonSoft.Json.JsonConvert.SerializeObject(ResponseData, NewtonSoft.Json.Formatting.Indented) 
+
+		If (ResponseData = *Nothing)
+			Http.Response.StatusCode = 404
+		EndIf
+
+		Http.Response.ContentType = "application/json"
+		Http.Response.Write(Json)
+	EndSr
+
+	BegFunc GetRequestContent Type(*String) Access(*Protected)
+		DclFld stream Type(System.IO.Stream)
+		DclFld reader Type(System.IO.StreamReader)
+		DclFld encoding Type(System.Text.Encoding)
+		DclFld content Type(*String)
+
+		stream = Http.Request.InputStream
+		encoding = Http.Request.ContentEncoding
+		reader = *new System.IO.StreamReader(stream, encoding)
+		content = reader.ReadToEnd()
+
+		LeaveSr content
+	EndFunc
+
+	BegFunc GetJsonRequestContent Type(NewtonSoft.Json.Linq.JObject) Access(*Protected) 
+
+		DclFld Json Type(*String) 
+		//DclFld JsonResponse Type(NewtonSoft.Json.Linq.JObject)
+
+		Json = *This.GetRequestContent()
+		LeaveSr NewtonSoft.Json.Linq.JObject.Parse(Json) 
+	EndFunc 
+
+	BegFunc ExecuteMethod Type(*Object) Access(*Protected)
+		DclSrParm Method Type(*String)
+		DclSrParm Controller Type(*Object)
+
+		DclFld Result Type(*Object) Inz(*Nothing)
+		DclFld ControllerType Type(Type)
+		DclFld Info Type(MethodInfo)
+		DclFld ParamCounter Type(*Integer4) Inz(0)
+		DclFld MethodParameter Type(ParameterInfo)
+		DclArray MethodParameters Type(ParameterInfo) Rank(1)
+		DclArray Parameters Type(*Object) Rank(1)
+
+		ControllerType = Controller.GetType()
+		Info = ControllerType.GetMethod(Method)
+
+		If (Info = *Nothing)
+			throw *New InvalidOperationException("Invalid controller method")
+		EndIf
+
+		MethodParameters = Info.GetParameters()
+		ForEach MethodParameter Collection(MethodParameters)
+
+			DclFld ParamString Type(*String)
+			ParamString = _RouteData.Values[MethodParameter.Name] *As *String
+
+			If (Parameters = *Nothing)
+				Parameters = *New *Object[MethodParameters.Length]
+			EndIf
+
+			Parameters[ParamCounter] = StringToTypedValue(ParamString, MethodParameter.ParameterType)
+			
+			ParamCounter += 1
+
+		EndFor
+
+		Result = Info.Invoke(Controller, Parameters)
+
+		LeaveSr Result
+	EndFunc
+
+	BegFunc StringToTypedValue Type(*Object) Access(*Private)
+		DclSrParm SourceString Type(*String)
+		DclSrParm TargetType Type(Type)
+
+		DclFld Result Type(*Object) Inz(*Nothing)
+		DclFld IsEmpty Type(*Boolean)
+		DclFld Culture Type(CultureInfo)
+
+		IsEmpty = String.IsNullOrEmpty(SourceString)
+		Culture = CultureInfo.CurrentCulture
+
+		If (TargetType = *TypeOf(*String))
+			Result = SourceString
+		ElseIf (TargetType = *TypeOf(Int32) OR TargetType = *TypeOf(*Integer4))
+			If (IsEmpty)
+				Result = 0
+			Else
+				Result = Int32.Parse(SourceString, NumberStyles.Any, Culture.NumberFormat)
+			EndIf
+		ElseIf (TargetType = *TypeOf(Int64))
+			If (IsEmpty)
+				Result = Convert.ToInt64(0)
+			Else
+				Result = Int64.Parse(SourceString, NumberStyles.Any, Culture.NumberFormat)
+			EndIf
+		ElseIf (TargetType = *TypeOf(Int16))
+			If (IsEmpty)
+				Result = Convert.ToInt16(0)
+			Else
+				Result = Int16.Parse(SourceString, NumberStyles.Any, Culture.NumberFormat)
+			EndIf
+		ElseIf (TargetType = *TypeOf(*Decimal))
+			If (IsEmpty)
+				Result = Convert.ToDecimal(0)
+			Else
+				Result = Decimal.Parse(SourceString, NumberStyles.Any, Culture.NumberFormat)
+			EndIf
+		ElseIf (TargetType = *TypeOf(DateTime))
+			If (IsEmpty)
+				Result = DateTime.MinValue
+			Else
+				Result = Convert.ToDateTime(SourceString, Culture.DateTimeFormat)
+			EndIf
+		ElseIf (TargetType = *TypeOf(*Byte))
+			If (IsEmpty)
+				Result = 0
+			Else
+				Result = Convert.ToByte(SourceString)
+			EndIf
+		ElseIf (TargetType = *TypeOf(*Float8))
+			If (IsEmpty)
+				Result = Convert.ToDouble(0)
+			Else
+				Result = Double.Parse(SourceString, NumberStyles.Any, Culture.NumberFormat)
+			EndIf
+		ElseIf (TargetType = *TypeOf(Single))
+			If (IsEmpty)
+				Result = Convert.ToSingle(0)
+			Else
+				Result = Single.Parse(SourceString, NumberStyles.Any, Culture.NumberFormat)
+			EndIf
+		ElseIf (TargetType = *TypeOf(*Boolean))
+			If (NOT IsEmpty AND SourceString.ToLower() = "true" OR SourceString.ToLower() = "on" OR SourceString = "1")
+				Result = *True
+			Else
+				Result = *False
+			EndIf
+		ElseIf (TargetType = *TypeOf(Guid))
+			If (IsEmpty)
+				Result = Guid.Empty
+			Else
+				Result = *New Guid(SourceString)
+			EndIf
+		ElseIf (TargetType.IsEnum)
+			Result = Enum.Parse(TargetType, SourceString)
+		Else
+			Result = Convert.ChangeType(SourceString, TargetType)
+		EndIf
+
+		LeaveSr Result
+	EndFunc
+
+EndClass
